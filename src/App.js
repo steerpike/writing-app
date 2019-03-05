@@ -45,33 +45,31 @@ class App extends Component {
       // - Document list
       // - Current document from document list
       this.setState({ user, name, session:null })
+      this.getRemoteDocumentList(name)
     }.bind(this))
-    this.loadSave = setInterval(() => {
-      if (this.state && this.state.name !== 'Anonymous') {
-        this.saveRemotePayload()
-        this.saveRemoteDocumentList()
-      }
-    }, 10000)
+    this.onUnload = this.onUnload.bind(this)
   }
   /* React lifecycle */
   async componentDidUpdate(prevProps) {
     localStorage[this.state.name] = JSON.stringify(this.state);
-    //Save remote payload to firestore
-    // - User, name, debug, current document id
-    // - Current document
-    // - Session
+  }
+  componentDidMount() {
+    window.addEventListener("beforeunload", this.onUnload)
   }
   componentWillUnmount() {
     this.loadSave && clearInterval(this.loadSave);
     this.loadSave = false;
     this.endSession()
-    this.saveRemotePayload()
-    this.saveRemoteDocumentList()
+    window.removeEventListener("beforeunload", this.onUnload)
   }
   setStateAsync(state) {
     return new Promise((resolve) => {
       this.setState(state, resolve)
     });
+  }
+  onUnload(event) {
+    this.saveRemotePayload()
+    this.saveRemoteDocumentList()
   }
   /* Auth management */
   signIn = () => {
@@ -125,9 +123,11 @@ class App extends Component {
     this.updateDocumentList()
   }
   updateDocumentList = async () => {
+    console.log('update document list')
     if (this.state.currentDocument && 
       (this.state.currentDocument.title !== '' ||
-      this.state.currentDocument.content !== ''))
+      this.state.currentDocument.content !== '' ||
+      this.state.currentDocument.content !== '<p><br></p>')) //TODO: Clean this up
       {
         var docs = [...this.state.documents];
         let index = docs.findIndex(item => {
@@ -162,7 +162,7 @@ class App extends Component {
     let user = {
       name: this.state.name,
       debug: this.state.debug,
-      currentDocument: this.state.currentDocument
+      currentDocumentUID: this.state.currentDocument.uid
     }
     const userConnection = db.collection('users').doc(user.name)
     userConnection.set({
@@ -178,12 +178,55 @@ class App extends Component {
   }
   saveRemoteDocumentList = async () => {
     let documents = this.state.documents
+    console.log('saving document list')
     documents.map((doc) => {
       const ref = db.collection('documents').doc(doc.uid)
       ref.set({
-        doc
+        ...doc,
+        user:this.state.name
       })
     })
+  }
+  getRemoteDocumentList = async (name) => {
+    let docs = [...this.state.documents];
+    let currentDocUID = this.state.currentDocument.uid
+    let _this = this
+    console.log('getting document list')
+    if (name !== 'Anonymous') {
+      db.collection("documents").where("user", "==", name)
+        .get()
+        .then(function (querySnapshot) {
+          querySnapshot.forEach(function (doc) {
+            let index = docs.findIndex(item => {
+              return item['uid'] === doc.id;
+            });
+            let localDate = new Date(docs[index].lastEdit)
+            let remoteDate = new Date(doc.data().lastEdit.seconds * 1000)
+            if(remoteDate > localDate) {
+              docs[index].title = doc.data().title
+              docs[index].content = doc.data().content
+              if (currentDocUID === doc.id) {
+                _this.setState(prevState => ({
+                  currentDocument: {
+                    ...prevState.currentDocument,
+                    content: doc.data().content,
+                    title: doc.data().title,
+                    lastEdit: remoteDate.toISOString()
+                  }
+                }))
+              }
+            }
+          }, this);
+        },this)
+        .catch(function (error) {
+          console.log("Error getting documents: ", error);
+        });
+      this.loadSave = setInterval(() => {
+        this.saveRemotePayload()
+        this.saveRemoteDocumentList()
+      }, 10000)
+    }
+    
   }
   /* End document management */
   /* Session management */
