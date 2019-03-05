@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { auth, googleAuthProvider } from './Services/firebase'
+import { db, auth, googleAuthProvider } from './Services/firebase'
 
 import DocumentList from './Components/DocumentList';
 import Auth from './Components/Auth';
@@ -30,12 +30,7 @@ class App extends Component {
       user: null,
       name: 'Anonymous',
       documents: [],
-      currentDocument: {
-        id: new Date().toISOString(),
-        uid: null,
-        title: '',
-        content: ''
-      },
+      currentDocument: this.newDoc(),
       session: null,
       debug: true
     }
@@ -45,15 +40,33 @@ class App extends Component {
       if(localData) {
         this.setState({ ...localData })
       }
+      //Get remote payload from firestore
+      // - User, name, debug
+      // - Document list
+      // - Current document from document list
       this.setState({ user, name, session:null })
     }.bind(this))
+    this.loadSave = setInterval(() => {
+      if (this.state && this.state.name !== 'Anonymous') {
+        this.saveRemotePayload()
+        this.saveRemoteDocumentList()
+      }
+    }, 10000)
   }
   /* React lifecycle */
   async componentDidUpdate(prevProps) {
     localStorage[this.state.name] = JSON.stringify(this.state);
+    //Save remote payload to firestore
+    // - User, name, debug, current document id
+    // - Current document
+    // - Session
   }
   componentWillUnmount() {
+    this.loadSave && clearInterval(this.loadSave);
+    this.loadSave = false;
     this.endSession()
+    this.saveRemotePayload()
+    this.saveRemoteDocumentList()
   }
   setStateAsync(state) {
     return new Promise((resolve) => {
@@ -112,34 +125,76 @@ class App extends Component {
     this.updateDocumentList()
   }
   updateDocumentList = async () => {
-    var docs = [...this.state.documents];
-    let index = docs.findIndex(item => {
-      return item['id'] === this.state.currentDocument.id;
-    });
-    if (index === -1) {
-      docs.push(this.state.currentDocument);
-    } else {
-      docs[index] = this.state.currentDocument
-    }
-    await this.setStateAsync(prevState => ({
-      documents: docs
-    }))
+    if (this.state.currentDocument && 
+      (this.state.currentDocument.title !== '' ||
+      this.state.currentDocument.content !== ''))
+      {
+        var docs = [...this.state.documents];
+        let index = docs.findIndex(item => {
+          return item['id'] === this.state.currentDocument.id;
+        });
+        if (index === -1) {
+          docs.push(this.state.currentDocument);
+        } else {
+          docs[index] = this.state.currentDocument
+        }
+        await this.setStateAsync(prevState => ({
+          documents: docs
+        }))
+      }
   }
   createNewDocument = () => {
+    let newDocument = this.newDoc()
+    this.setState({ currentDocument: newDocument })
+  }
+  newDoc = () => {
+    let reference = db.collection('documents').doc()
+    let uid = reference.id
     let newDocument = {
       id: new Date().toISOString(),
-      uid: null,
+      uid: uid,
       title: '',
       content: ''
     }
-    this.setState({ currentDocument: newDocument })
+    return newDocument
+  }
+  saveRemotePayload = async () => {
+    let user = {
+      name: this.state.name,
+      debug: this.state.debug,
+      currentDocument: this.state.currentDocument
+    }
+    const userConnection = db.collection('users').doc(user.name)
+    userConnection.set({
+      user
+    })
+    let session = this.state.session
+    if(session) {
+      const sessionConnection = db.collection('sessions').doc(session.uid)
+      sessionConnection.set({
+        session
+      })
+    }
+  }
+  saveRemoteDocumentList = async () => {
+    let documents = this.state.documents
+    documents.map((doc) => {
+      const ref = db.collection('documents').doc(doc.uid)
+      ref.set({
+        doc
+      })
+    })
   }
   /* End document management */
   /* Session management */
   selectSessionGoal = (goal, type) => {
     let currentWords = this.state.currentDocument.content.split(" ").length
+    let reference = db.collection('sessions').doc()
+    let uid = reference.id
     this.setState({
       session: {
+        documentUID: this.state.currentDocument.uid,
+        uid: uid,
         target: goal,
         currentTargetValue: 0,
         type:type,

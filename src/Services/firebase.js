@@ -12,8 +12,6 @@ var config = {
 };
 firebase.initializeApp(config);
 
-export const db = firebase.firestore().enablePersistence().catch(function(err){ 
-    console.log(err)
-})
+export const db = firebase.firestore()
 export const auth = firebase.auth()
 export const googleAuthProvider = new firebase.auth.GoogleAuthProvider()
