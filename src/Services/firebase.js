@@ -13,5 +13,19 @@ var config = {
 firebase.initializeApp(config);
 
 export const db = firebase.firestore()
+db.enablePersistence()
+    .catch(function (err) {
+        if (err.code === 'failed-precondition') {
+            // Multiple tabs open, persistence can only be enabled
+            // in one tab at a a time.
+            // ...
+            console.log('failed-precondition', err)
+        } else if (err.code === 'unimplemented') {
+            // The current browser does not support all of the
+            // features required to enable persistence
+            // ...
+            console.log('unimplemented', err)
+        }
+    });
 export const auth = firebase.auth()
 export const googleAuthProvider = new firebase.auth.GoogleAuthProvider()

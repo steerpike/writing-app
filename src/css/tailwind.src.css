@@ -1,0 +1,26 @@
+@tailwind preflight;
+@tailwind components;
+
+.button {
+    @apply font-semibold py-2 px-4 border rounded shadow mr-1;
+}
+
+.session-button {
+    @apply bg-white text-grey-darkest border-grey-light;
+}
+.session-button:hover {
+    @apply bg-grey-lightest;
+}
+.user-button {
+    @apply bg-white text-blue-darkest border-blue-light;
+}
+.user-button:hover {
+    @apply bg-blue-lightest;
+}
+.document-button {
+    @apply bg-white text-green-darkest border-green-light;
+}
+.document-button:hover {
+    @apply bg-green-lightest;
+}
+@tailwind utilities;

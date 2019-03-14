@@ -34,6 +34,7 @@ input {
   font-size: 3rem;
   font-family: serif;
   box-sizing : border-box;
+  border: solid 1px #fdfdfd;
 }
 .quill, .articleContent {
   padding: 10px;

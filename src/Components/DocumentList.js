@@ -4,7 +4,9 @@ class DocumentList extends Component {
 
     render() {
         const documents = this.props.documents.map((doc, key) =>
-            <li key={key} onClick={() => this.props.changeCurrentDocument(doc.id) }>{doc.title}</li>
+            <li className="m-2 flex justify-between"
+                key={key}> 
+                <button onClick={() => this.props.changeCurrentDocument(doc.id) }>{doc.title}</button><button>X</button></li>
         )
         return (
             <div>
@@ -12,7 +14,7 @@ class DocumentList extends Component {
                 <ul>
                 {documents}
                 </ul>
-                <button onClick={() => this.props.createNewDocument()}>Add New Document</button>
+                <button className="button document-button" onClick={() => this.props.createNewDocument()}>Add New Document</button>
             </div>
         );
     }

@@ -15,14 +15,14 @@ class App extends Component {
    - Globally register list of all documents as app state - DONE
    - Register current document as app state - DONE
    - Get all documents found under user's email in local storage - DONE
-   - Get all documents found under user's email in remote storage
-   - Update any local or remote document that has non-matching last edit timestamps
-   - Update the updated list of documents into app state with all found and updated documents
+   - Get all documents found under user's email in remote storage - DONE
+   - Update any local or remote document that has non-matching last edit timestamps - DONE
+   - Update the updated list of documents into app state with all found and updated documents - DONE
    - Notify user of any failure to sync data
    - Add flash messages to provide feedback to User
   
    - Edit document
-   - Each edit of title or content update app[DONE], local[DONE], and remote document state
+   - Each edit of title or content update app[DONE], local[DONE], and remote document state[DONE]
   */
   constructor(props) {
     super(props)
@@ -32,11 +32,13 @@ class App extends Component {
       documents: [],
       currentDocument: this.newDoc(),
       session: null,
-      debug: true
+      debug: true,
+      showChrome: true
     }
     auth.onAuthStateChanged(function (user) {
       let name = user?user.email:'Anonymous'
       let localData = localStorage[name]?JSON.parse(localStorage[name]):null
+      this.setStateAsync({ documents: [], currentDocument: this.newDoc() })
       if(localData) {
         this.setState({ ...localData })
       }
@@ -48,10 +50,13 @@ class App extends Component {
       this.getRemoteDocumentList(name)
     }.bind(this))
     this.onUnload = this.onUnload.bind(this)
+    this.toggleChrome = this.toggleChrome.bind(this);
   }
   /* React lifecycle */
   async componentDidUpdate(prevProps) {
-    localStorage[this.state.name] = JSON.stringify(this.state);
+    if(this.state.documents.length) {
+      localStorage[this.state.name] = JSON.stringify(this.state);
+    }
   }
   componentDidMount() {
     window.addEventListener("beforeunload", this.onUnload)
@@ -71,6 +76,21 @@ class App extends Component {
     this.saveRemotePayload()
     this.saveRemoteDocumentList()
   }
+  /* Display management */
+  toggleChrome(e) {
+    this.setState({
+      showChrome: !this.state.showChrome
+    })
+    console.log('toggle', this.state.showChrome)
+    e.stopPropagation();
+  }
+  closeChrome(e) {
+    this.setState({
+      showChrome: false
+    })
+    console.log('close', this.state.showChrome)
+  }
+
   /* Auth management */
   signIn = () => {
     auth.signInWithPopup(googleAuthProvider)
@@ -102,6 +122,9 @@ class App extends Component {
       }
     }))
     this.updateDocumentList()
+    if(this.state.showChrome) {
+      this.closeChrome()
+    }
   }
   changeCurrentDocumentContent = async (content) => {
     let lastEdit = new Date()
@@ -121,13 +144,16 @@ class App extends Component {
       }));
     }
     this.updateDocumentList()
+    if (this.state.showChrome) {
+      this.closeChrome()
+    }
   }
   updateDocumentList = async () => {
     console.log('update document list')
     if (this.state.currentDocument && 
       (this.state.currentDocument.title !== '' ||
-      this.state.currentDocument.content !== '' ||
-      this.state.currentDocument.content !== '<p><br></p>')) //TODO: Clean this up
+      (this.state.currentDocument.content !== '' &&
+      this.state.currentDocument.content !== '<p><br></p>'))) //TODO: Clean this up
       {
         var docs = [...this.state.documents];
         let index = docs.findIndex(item => {
@@ -164,6 +190,7 @@ class App extends Component {
       debug: this.state.debug,
       currentDocumentUID: this.state.currentDocument.uid
     }
+    
     const userConnection = db.collection('users').doc(user.name)
     userConnection.set({
       user
@@ -175,10 +202,12 @@ class App extends Component {
         session
       })
     }
+    
   }
   saveRemoteDocumentList = async () => {
     let documents = this.state.documents
     console.log('saving document list')
+    
     documents.map((doc) => {
       const ref = db.collection('documents').doc(doc.uid)
       ref.set({
@@ -200,38 +229,45 @@ class App extends Component {
             let index = docs.findIndex(item => {
               return item['uid'] === doc.id;
             });
-            let localDate = new Date(docs[index].lastEdit)
-            let remoteDate = new Date(doc.data().lastEdit.seconds * 1000)
-            if(remoteDate > localDate) {
-              docs[index].title = doc.data().title
-              docs[index].content = doc.data().content
-              if (currentDocUID === doc.id) {
-                _this.setState(prevState => ({
-                  currentDocument: {
-                    ...prevState.currentDocument,
-                    content: doc.data().content,
-                    title: doc.data().title,
-                    lastEdit: remoteDate.toISOString()
-                  }
-                }))
+            if(docs[index] && doc.data()) {
+              let localDate = new Date(docs[index].lastEdit)
+              let remoteDate = new Date(doc.data().lastEdit.seconds * 1000)
+              if (remoteDate > localDate) {
+                docs[index].title = doc.data().title
+                docs[index].content = doc.data().content
+                if (currentDocUID === doc.id) {
+                  _this.setState(prevState => ({
+                    currentDocument: {
+                      ...prevState.currentDocument,
+                      content: doc.data().content,
+                      title: doc.data().title,
+                      lastEdit: remoteDate.toISOString()
+                    }
+                  }))
+                }
               }
             }
+            
           }, this);
         },this)
         .catch(function (error) {
           console.log("Error getting documents: ", error);
         });
-      this.loadSave = setInterval(() => {
+      /*this.loadSave = setInterval(() => {
         this.saveRemotePayload()
         this.saveRemoteDocumentList()
-      }, 10000)
+      }, 10000)*/
     }
     
   }
   /* End document management */
   /* Session management */
   selectSessionGoal = (goal, type) => {
-    let currentWords = this.state.currentDocument.content.split(" ").length
+    let content = this.state.currentDocument.content.trim()
+    let currentWords = content.split(" ").length
+    if (this.state.currentDocument.content === '<p><br></p>') {
+      currentWords = 0
+    }
     let reference = db.collection('sessions').doc()
     let uid = reference.id
     this.setState({
@@ -280,8 +316,13 @@ class App extends Component {
       }
       if (this.state.session.type === "words") {
         //calc the number of words in the content and compare to target
-        let wordCount = this.state.currentDocument.content.split(" ").length
+        let content = this.state.currentDocument.content.trim()
+        let wordCount = content.split(" ").length
+        if (this.state.currentDocument.content === '<p><br></p>') {
+          wordCount = 0
+        }
         let sessionWordCount = wordCount - this.state.session.startingWordCount
+        if (sessionWordCount < 0) { sessionWordCount = 0 }
         this.setState(prevState => ({
           session: {
             ...prevState.session,
@@ -297,7 +338,7 @@ class App extends Component {
           }));
         }
       }
-      //Check if user is paused typing
+      //Check if user has paused typing
       if (this.state.session.secondsSinceLastEdit >= 4) {
         this.setState(prevState => ({
           session: {
@@ -315,17 +356,34 @@ class App extends Component {
   /* End Session management */
 
   render() {
-
+    const isShowChrome = this.state.showChrome
     return (
-        <div className="App">
-          <header className="App-header">
-          <Auth {...this.state} signin={this.signIn} signout={this.signOut} showuser={this.showUser}/>
-          </header>
+        <div className="mx-10 my-5">
+        {isShowChrome ? (
+          <header>
+            <div className="flex justify-between items-center">
+              <div className="flex-1">
+                <a href ="/"><img src="/images/logo.png" 
+                  alt=""
+                  className="align-middle"
+                  width="100px"
+                  height="100px" />
+                  Words in Progress</a>
+              </div>
+              <Auth {...this.state} 
+                signin={this.signIn} 
+                signout={this.signOut} 
+                showuser={this.showUser}/>
+            </div>
+            <DocumentList {...this.state}
+              changeCurrentDocument={this.changeCurrentDocument}
+              createNewDocument={this.createNewDocument} />
+          </header>):(
+            <button onClick={this.toggleChrome}>Show Header</button>
+          )
+        }
           <main>
-          <DocumentList {...this.state} 
-            changeCurrentDocument={this.changeCurrentDocument} 
-            createNewDocument={this.createNewDocument} />
-          <Session {...this.state} 
+          <Session {...this.state}
             selectSessionGoal={this.selectSessionGoal}
             endSession={this.endSession} />
           <Document {...this.state} 
