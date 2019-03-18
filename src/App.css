@@ -24,7 +24,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-.editorContainer, .container {
+.container {
   width: 50%;
   margin: 10px auto;
 }

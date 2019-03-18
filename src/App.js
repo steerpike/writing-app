@@ -1,5 +1,10 @@
 import React, { Component } from 'react';
 import { db, auth, googleAuthProvider } from './Services/firebase'
+import swal from 'sweetalert';
+import { NotificationContainer, NotificationManager } from 'react-notifications'
+import 'react-notifications/lib/notifications.css';
+
+
 
 import DocumentList from './Components/DocumentList';
 import Auth from './Components/Auth';
@@ -33,7 +38,9 @@ class App extends Component {
       currentDocument: this.newDoc(),
       session: null,
       debug: true,
-      showChrome: true
+      showChrome: true,
+      lastContent: '',
+      lastTitle: ''
     }
     auth.onAuthStateChanged(function (user) {
       let name = user?user.email:'Anonymous'
@@ -100,6 +107,7 @@ class App extends Component {
   }
   showUser = () => {
     console.log(this.state.user)
+    NotificationManager.info(this.state.user.displayName + ' '+this.state.user.email);
   }
   /* End Auth management */
   /* Document management */
@@ -235,6 +243,7 @@ class App extends Component {
               if (remoteDate > localDate) {
                 docs[index].title = doc.data().title
                 docs[index].content = doc.data().content
+                NotificationManager.info('Updated ' + docs[index].title+' from remote storage','', 3000);
                 if (currentDocUID === doc.id) {
                   _this.setState(prevState => ({
                     currentDocument: {
@@ -247,18 +256,60 @@ class App extends Component {
                 }
               }
             }
-            
+            _this.setState(prevState => ({
+              documents: docs
+            }))
           }, this);
         },this)
         .catch(function (error) {
           console.log("Error getting documents: ", error);
         });
-      /*this.loadSave = setInterval(() => {
-        this.saveRemotePayload()
-        this.saveRemoteDocumentList()
-      }, 10000)*/
+      this.loadSave = setInterval(() => {
+        if(this.state.currentDocument.content !== this.state.lastContent ||
+          this.state.currentDocument.title !== this.state.lastTitle) {
+            this.saveRemotePayload()
+            this.saveRemoteDocumentList()
+            this.setState({ 
+              lastContent: this.state.currentDocument.content,
+              lastTitle: this.state.currentDocument.title
+            })
+          }
+        
+      }, 10000)
     }
     
+  }
+  deleteDocument = (id) => {
+    swal({
+      title: "Are you sure?",
+      text: "Once deleted, you will not be able to recover this file!",
+      icon: "warning",
+      buttons: true,
+      dangerMode: true,
+    })
+      .then((willDelete) => {
+        if (willDelete) {
+          var docs = [...this.state.documents];
+          let index = docs.findIndex(item => {
+            return item['id'] === id;
+          });
+          if (index !== -1) {
+            let doc = docs[index]
+            docs.splice(index, 1)
+            this.setState({ documents: docs })
+            db.collection('documents').doc(doc.uid).delete().then(function () {
+              console.log('Deleted in firestore')
+            }).catch(function (error) {
+              console.log('Error deleting', error)
+            })
+          }
+          swal("Your file has been deleted!", {
+            icon: "success",
+          });
+        } else {
+          swal("Your file is safe!");
+        }
+      });
   }
   /* End document management */
   /* Session management */
@@ -368,7 +419,7 @@ class App extends Component {
                   className="align-middle"
                   width="100px"
                   height="100px" />
-                  Words in Progress</a>
+                  Hall of Bright Carvings</a>
               </div>
               <Auth {...this.state} 
                 signin={this.signIn} 
@@ -377,12 +428,14 @@ class App extends Component {
             </div>
             <DocumentList {...this.state}
               changeCurrentDocument={this.changeCurrentDocument}
-              createNewDocument={this.createNewDocument} />
+              createNewDocument={this.createNewDocument}
+              deleteDocument={this.deleteDocument} />
           </header>):(
             <button onClick={this.toggleChrome}>Show Header</button>
           )
         }
-          <main>
+          <main className="container">
+          <NotificationContainer />
           <Session {...this.state}
             selectSessionGoal={this.selectSessionGoal}
             endSession={this.endSession} />
@@ -390,6 +443,7 @@ class App extends Component {
             changeCurrentDocumentTitle={this.changeCurrentDocumentTitle}
             changeCurrentDocumentContent={this.changeCurrentDocumentContent} />
           </main>
+
         </div>
     );
   }

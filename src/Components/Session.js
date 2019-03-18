@@ -6,8 +6,6 @@ class Session extends Component {
         let { session } = this.props;
         return (
             <div>
-                {session ? <h3>{session.currentTargetValue}</h3>: ''}
-                {session && session.completed && <h3>Goal completed</h3>}
                 <button className="button session-button"
                     onClick={() => this.props.selectSessionGoal(250, 'words')}>250 Words</button>
                 <button className="button session-button"
@@ -25,6 +23,8 @@ class Session extends Component {
                 <button className="button session-button"
                     onClick={() => this.props.selectSessionGoal(60, 'minutes')}>60 Minutes</button>
                 {session && <button className="button session-button" onClick={() => this.props.endSession()}>End Session</button>}
+                {session ? <h3>{session.currentTargetValue}</h3> : ''}
+                {session && session.completed && <h3>Goal completed</h3>}
             </div>
         );
     }

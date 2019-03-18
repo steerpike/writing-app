@@ -6,7 +6,9 @@ class DocumentList extends Component {
         const documents = this.props.documents.map((doc, key) =>
             <li className="m-2 flex justify-between"
                 key={key}> 
-                <button onClick={() => this.props.changeCurrentDocument(doc.id) }>{doc.title}</button><button>X</button></li>
+                <button onClick={() => this.props.changeCurrentDocument(doc.id) }>{doc.title}</button>
+                <button onClick={() => this.props.deleteDocument(doc.id)}>X</button>
+            </li>
         )
         return (
             <div>
