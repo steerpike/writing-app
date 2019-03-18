@@ -26,7 +26,7 @@ class Document extends Component {
                 </h2>
                 {currentDocument ?
                 <ReactQuill
-                        className="border border-grey-light reactQuill"
+                    className="border border-grey-light reactQuill"
                     theme="bubble"
                     value={this.props.currentDocument.content}
                     onChange={this.changeContent}

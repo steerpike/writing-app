@@ -255,6 +255,24 @@ class App extends Component {
                   }))
                 }
               }
+            } else {
+              if(doc.data()) {
+                let remoteDate = null
+                if (doc.data().lastEdit && doc.data().lastEdit.seconds){
+                  remoteDate = new Date(doc.data().lastEdit.seconds * 1000)
+                } else {
+                  remoteDate = new Date(doc.data().lastEdit)
+                }
+                let remoteDoc = {
+                  id: doc.data().id,
+                  uid: doc.data().uid,
+                  title: doc.data().title,
+                  content: doc.data().content,
+                  lastEdit: remoteDate.toISOString()
+                }
+                console.log(remoteDoc)
+                docs.push(remoteDoc)
+              }
             }
             _this.setState(prevState => ({
               documents: docs
