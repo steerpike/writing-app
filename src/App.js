@@ -256,7 +256,7 @@ class App extends Component {
                 }
               }
             } else {
-              if(doc.data()) {
+              if(doc.data()) { //We have a remote document not found locally
                 let remoteDate = null
                 if (doc.data().lastEdit && doc.data().lastEdit.seconds){
                   remoteDate = new Date(doc.data().lastEdit.seconds * 1000)
