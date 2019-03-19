@@ -222,6 +222,7 @@ class App extends Component {
         ...doc,
         user:this.state.name
       })
+      return null
     })
   }
   getRemoteDocumentList = async (name) => {
@@ -313,6 +314,10 @@ class App extends Component {
           if (index !== -1) {
             let doc = docs[index]
             docs.splice(index, 1)
+            if(this.state.currentDocument.id === doc.id)
+            {
+              this.setState({ currentDocument: this.newDoc() })
+            }
             this.setState({ documents: docs })
             db.collection('documents').doc(doc.uid).delete().then(function () {
               console.log('Deleted in firestore')
@@ -320,11 +325,11 @@ class App extends Component {
               console.log('Error deleting', error)
             })
           }
-          swal("Your file has been deleted!", {
+          swal("Your file has been deleted.", {
             icon: "success",
           });
         } else {
-          swal("Your file is safe!");
+          swal("Your file has not been deleted.");
         }
       });
   }
@@ -451,7 +456,7 @@ class App extends Component {
             <button onClick={this.toggleChrome}>Show Header</button>
           )
         }
-          <main className="container">
+          <main className="container mx-auto">
           <NotificationContainer />
           <Session {...this.state}
             selectSessionGoal={this.selectSessionGoal}

@@ -19,14 +19,14 @@ class Document extends Component {
             <div className="editorContainer">
                 <h2>
                     {currentDocument ? <input type="text" 
-                        className="border border-grey-light my-5"
+                        className="w-full shadow-md  p-4 border border-grey-light my-5"
                         value={this.props.currentDocument.title} 
                         onChange={this.changeTitle}
                          /> : null}
                 </h2>
                 {currentDocument ?
                 <ReactQuill
-                    className="border border-grey-light reactQuill"
+                    className="min-h-screen shadow-md border border-grey-light reactQuill"
                     theme="bubble"
                     value={this.props.currentDocument.content}
                     onChange={this.changeContent}

@@ -533,13 +533,16 @@ table {
   border-width: 1px;
   border-radius: .25rem;
   box-shadow: 0 2px 4px 0 rgba(0, 0, 0, .1);
-  margin-right: .25rem;
+  margin-top: .5rem;
+  margin-bottom: .5rem;
 }
 
 .session-button {
   background-color: #fff;
   color: #3d4852;
   border-color: #dae1e7;
+  margin: .25rem;
+  padding: .25rem;
 }
 
 .session-button:hover {

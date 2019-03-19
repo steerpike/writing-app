@@ -9,7 +9,7 @@ class DocumentList extends Component {
                 <button 
                     onClick={() => this.props.changeCurrentDocument(doc.id) }>{doc.title}</button>
                 <button
-                    className="button bg-white text-red-darkest border-red-light hover:bg-red-lightest" 
+                    className="button my-0 bg-white text-red-darkest border-red-light hover:bg-red-lightest" 
                     onClick={() => this.props.deleteDocument(doc.id)}>X</button>
             </li>
         )
