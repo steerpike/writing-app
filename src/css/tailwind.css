@@ -569,6 +569,10 @@ table {
   background-color: #e3fcec;
 }
 
+.ql-editor {
+  @apply: text-lg;
+}
+
 .list-reset {
   list-style: none;
   padding: 0;
