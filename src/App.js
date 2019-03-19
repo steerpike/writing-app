@@ -270,7 +270,6 @@ class App extends Component {
                   content: doc.data().content,
                   lastEdit: remoteDate.toISOString()
                 }
-                console.log(remoteDoc)
                 docs.push(remoteDoc)
               }
             }
