@@ -24,6 +24,6 @@
     @apply bg-green-lightest;
 }
 .ql-editor {
-    @apply: text-lg;
+    @apply text-lg !important;
 }
 @tailwind utilities;
