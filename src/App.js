@@ -453,7 +453,9 @@ class App extends Component {
               createNewDocument={this.createNewDocument}
               deleteDocument={this.deleteDocument} />
           </header>):(
-            <button onClick={this.toggleChrome}>Show Header</button>
+            <button 
+              className="button" 
+              onClick={this.toggleChrome}>Show Header</button>
           )
         }
           <main className="container mx-auto">

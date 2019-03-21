@@ -10,7 +10,7 @@ class Auth extends Component {
                         <button className="button user-button" onClick={this.props.signout}>Logout</button>
                     ) : (
                         <button className="button user-button" onClick={this.props.signin}>
-                            Signup/Login
+                            Login with Google
                         </button>
                     )
                 }
