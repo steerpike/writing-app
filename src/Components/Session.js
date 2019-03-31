@@ -6,6 +6,7 @@ class Session extends Component {
         let { session } = this.props;
         return (
             <div>
+                <h3>Select a writing goal</h3>
                 <button className="button session-button"
                     onClick={() => this.props.selectSessionGoal(250, 'words')}>250 Words</button>
                 <button className="button session-button"

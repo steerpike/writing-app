@@ -371,7 +371,7 @@ class App extends Component {
       }));
       if (this.state.session.type === "minutes") {
         //compare elapsed time vs target time
-        if(this.state.session.currentTargetValue <= (this.state.session.target*60)) {
+        if(this.state.session.currentTargetValue < (this.state.session.target*60)) {
           this.setState(prevState => ({
             session: {
               ...prevState.session,
@@ -425,6 +425,7 @@ class App extends Component {
   endSession = () => {
     this.loadInterval && clearInterval(this.loadInterval);
     this.loadInterval = false;
+    this.setState({session: null})
   }
   /* End Session management */
 
