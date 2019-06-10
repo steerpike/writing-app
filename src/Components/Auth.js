@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { Link } from 'react-router-dom'
 
 class Auth extends Component {
 
@@ -17,6 +18,7 @@ class Auth extends Component {
                 {
                     this.props.debug ? (<button className="button user-button" onClick={ this.props.showuser }>Show User</button>) : ('')
                 }
+                <a href="/sessions" className="button">Sessions</a>
                 <p>Logged in as {this.props.user ? this.props.user.email:'Anonymous'}</p>
             </div>
         );

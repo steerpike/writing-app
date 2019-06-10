@@ -1,4 +1,6 @@
 import React, { Component } from 'react';
+import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
+
 import { db, auth, googleAuthProvider } from './Services/firebase'
 import swal from 'sweetalert';
 import { NotificationContainer, NotificationManager } from 'react-notifications'
@@ -9,6 +11,7 @@ import 'react-notifications/lib/notifications.css';
 import DocumentList from './Components/DocumentList';
 import Auth from './Components/Auth';
 import Session from './Components/Session';
+import Sessions from './Components/Sessions';
 import Document from './Components/Document';
 
 import './App.css';
@@ -460,6 +463,11 @@ class App extends Component {
           )
         }
           <main className="container mx-auto">
+          <Router>
+            <Switch>
+              <Route path="/sessions/" exact component={Sessions} />
+            </Switch>
+          </Router>
           <NotificationContainer />
           <Session {...this.state}
             selectSessionGoal={this.selectSessionGoal}
@@ -468,7 +476,6 @@ class App extends Component {
             changeCurrentDocumentTitle={this.changeCurrentDocumentTitle}
             changeCurrentDocumentContent={this.changeCurrentDocumentContent} />
           </main>
-
         </div>
     );
   }
